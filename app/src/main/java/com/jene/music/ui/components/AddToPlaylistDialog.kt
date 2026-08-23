@@ -11,6 +11,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jene.music.data.model.Song
 import com.jene.music.ui.MainViewModel
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import com.jene.music.ui.screens.CreatePlaylistDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,6 +26,17 @@ fun AddToPlaylistDialog(
 
     val sheetState = rememberModalBottomSheetState()
     val coroutineScope = rememberCoroutineScope()
+    var showCreateDialog by remember { mutableStateOf(false) }
+
+    if (showCreateDialog) {
+        CreatePlaylistDialog(
+            onDismiss = { showCreateDialog = false },
+            onCreate = { name, desc ->
+                viewModel.createPlaylist(name, desc.takeIf { it.isNotEmpty() })
+                showCreateDialog = false
+            }
+        )
+    }
 
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {
         Column(
@@ -36,22 +50,33 @@ fun AddToPlaylistDialog(
                 modifier = Modifier.padding(16.dp)
             )
 
-            if (playlists.isEmpty()) {
-                Text(
-                    text = "No playlists found. Go to Playlists to create one.",
-                    modifier = Modifier.padding(16.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                LazyColumn(modifier = Modifier.fillMaxWidth()) {
-                    items(playlists, key = { it.id }) { playlist ->
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                item {
+                    ListItem(
+                        headlineContent = { Text("New Playlist") },
+                        leadingContent = {
+                            Icon(Icons.Filled.Add, contentDescription = "Create new playlist")
+                        },
+                        modifier = Modifier.clickable { showCreateDialog = true }
+                    )
+                }
+                if (playlists.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No other playlists found.",
+                            modifier = Modifier.padding(16.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    items(playlists, key = { it.playlist.id }) { playlistWithSongs ->
                         ListItem(
-                            headlineContent = { Text(playlist.name) },
-                            supportingContent = if (playlist.description != null) {
-                                { Text(playlist.description) }
+                            headlineContent = { Text(playlistWithSongs.playlist.name) },
+                            supportingContent = if (playlistWithSongs.playlist.description != null) {
+                                { Text(playlistWithSongs.playlist.description!!) }
                             } else null,
                             modifier = Modifier.clickable {
-                                viewModel.addSongToPlaylist(playlist.id, song.id)
+                                viewModel.addSongToPlaylist(playlistWithSongs.playlist.id, song.id)
                                 onDismiss()
                             }
                         )

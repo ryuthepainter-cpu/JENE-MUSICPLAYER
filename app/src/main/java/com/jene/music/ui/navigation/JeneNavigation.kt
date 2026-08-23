@@ -33,7 +33,7 @@ fun JeneNavigation(viewModel: MainViewModel) {
                 Column {
                     MiniPlayer(
                         viewModel = viewModel, 
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        
                         onNavigateToNowPlaying = { navController.navigate("nowPlaying") }
                     )
                     GlassBottomNavigation(navController = navController)
@@ -63,7 +63,7 @@ fun JeneNavigation(viewModel: MainViewModel) {
                     val encodedAlbum = Uri.encode(albumName)
                     val encodedArtist = Uri.encode(artistName)
                     navController.navigate("albumDetail/$encodedAlbum/$encodedArtist")
-                }) 
+                }, onNavigateToPlaylist = { id -> navController.navigate("playlistDetail/$id") }) 
             }
             composable("search") { SearchScreen(viewModel) }
             composable("playlists") { PlaylistsScreen(viewModel, onNavigateToPlaylist = { id -> navController.navigate("playlistDetail/$id") }) }

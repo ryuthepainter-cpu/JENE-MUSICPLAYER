@@ -1,4 +1,11 @@
-package com.jene.music.ui.screens
+import os
+
+with open("app/src/main/java/com/jene/music/ui/screens/HomeScreen.kt", "r") as f:
+    content = f.read()
+
+# I will rewrite HomeScreen to use smaller components for the main sections.
+
+new_content = """package com.jene.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -207,7 +214,7 @@ private fun JumpBackInSection(recentlyPlayed: List<Song>, onPlaySong: (Song) -> 
         text = "Jump Back In",
         style = MaterialTheme.typography.titleSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 24.dp).padding(bottom = 16.dp)
+        modifier = Modifier.padding(horizontal = 24.dp, bottom = 16.dp)
     )
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -334,3 +341,8 @@ private fun RecentlyAddedRow(song: Song, onClick: () -> Unit) {
         }
     }
 }
+"""
+
+with open("app/src/main/java/com/jene/music/ui/screens/HomeScreen.kt", "w") as f:
+    f.write(new_content)
+

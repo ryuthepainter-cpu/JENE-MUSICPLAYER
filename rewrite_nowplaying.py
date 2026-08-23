@@ -1,4 +1,11 @@
-package com.jene.music.ui.screens
+import os
+
+with open("app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt", "r") as f:
+    content = f.read()
+
+# I will write a comprehensive, decomposed NowPlayingScreen preserving all logic
+
+new_content = """package com.jene.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -314,3 +321,7 @@ private fun formatTime(durationMs: Long): String {
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
 }
+"""
+
+with open("app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt", "w") as f:
+    f.write(new_content)

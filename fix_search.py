@@ -1,4 +1,6 @@
-package com.jene.music.ui.screens
+import re
+
+content = """package com.jene.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -17,22 +19,11 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.SongListItem
-import com.jene.music.ui.components.AddToPlaylistDialog
-import com.jene.music.data.model.Song
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SearchScreen(viewModel: MainViewModel) {
     var searchQuery by remember { mutableStateOf("") }
-    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
-
-    if (songToAddToPlaylist != null) {
-        AddToPlaylistDialog(
-            song = songToAddToPlaylist!!,
-            viewModel = viewModel,
-            onDismiss = { songToAddToPlaylist = null }
-        )
-    }
     // Empty flow if search query is blank
     val searchResults by if (searchQuery.isNotBlank()) {
         viewModel.repository.searchSongs("%${searchQuery}%").collectAsStateWithLifecycle(emptyList())
@@ -82,9 +73,13 @@ fun SearchScreen(viewModel: MainViewModel) {
                     song = song,
                     onClick = { viewModel.playSong(song, searchResults) },
                     onFavoriteClick = { viewModel.toggleFavorite(song) },
-                    onAddToPlaylist = { songToAddToPlaylist = song }
+                    onAddToPlaylist = { /* Handle add to playlist */ }
                 )
             }
         }
     }
 }
+"""
+
+with open("app/src/main/java/com/jene/music/ui/screens/SearchScreen.kt", "w") as f:
+    f.write(content)

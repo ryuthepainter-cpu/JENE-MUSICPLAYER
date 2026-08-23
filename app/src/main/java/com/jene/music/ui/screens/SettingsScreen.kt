@@ -5,10 +5,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,7 +36,7 @@ fun SettingsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -66,20 +65,6 @@ fun SettingsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     title = "Scan Library",
                     subtitle = "Look for new music files on your device",
                     onClick = { viewModel.scanLibrary() }
-                )
-            }
-            
-            item {
-                SettingsSectionTitle("Appearance")
-                SettingsItem(
-                    title = "Theme",
-                    subtitle = "Dark (Default)",
-                    onClick = { /* TODO: Implement Theme toggle */ }
-                )
-                SettingsItem(
-                    title = "Dynamic Artwork Ambience",
-                    subtitle = "Enabled",
-                    onClick = { /* TODO: Implement Dynamic Ambience toggle */ }
                 )
             }
             

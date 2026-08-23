@@ -20,7 +20,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     private val database = AppDatabase.getDatabase(application)
     private val mediaScanner = MediaScanner(application, database.songDao())
-    val repository = MediaRepository(database.lyricAssociationDao(), database.songDao(), database.playlistDao(), mediaScanner)
+    val repository = MediaRepository(database.lyricAssociationDao(), database.songDao(), mediaScanner)
+    val playlistRepository = PlaylistRepository(database.playlistDao())
     val settingsRepository = SettingsRepository(application)
     val lyricsRepository = LyricsRepository(application)
     val lyricsDirectoryUri = settingsRepository.lyricsDirectoryFlow.stateIn(viewModelScope, SharingStarted.Lazily, null)
@@ -39,7 +40,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val recentlyPlayedSongs = repository.recentlyPlayedSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val mostPlayedSongs = repository.mostPlayedSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     
-    val allPlaylists = repository.allPlaylists.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    val allPlaylists = playlistRepository.allPlaylistsWithSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     
     init {
         scanLibrary()
@@ -93,31 +94,37 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    fun createPlaylist(name: String) {
+    fun createPlaylist(name: String, description: String? = null) {
         viewModelScope.launch {
-            repository.createPlaylist(name)
+            playlistRepository.createPlaylist(name, description)
         }
     }
 
     fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>> {
-        return repository.getSongsInPlaylist(playlistId)
+        return playlistRepository.getPlaylistWithSongsById(playlistId).map { it?.songs ?: emptyList() }
     }
 
     fun addSongToPlaylist(playlistId: Long, songId: String) {
         viewModelScope.launch {
-            repository.addSongToPlaylist(playlistId, songId)
+            playlistRepository.addSongToPlaylist(playlistId, songId)
         }
     }
     
     fun removeSongFromPlaylist(playlistId: Long, songId: String) {
         viewModelScope.launch {
-            repository.removeSongFromPlaylist(playlistId, songId)
+            playlistRepository.removeSongFromPlaylist(playlistId, songId)
         }
     }
     
+    
+    fun updatePlaylist(playlist: Playlist) {
+        viewModelScope.launch {
+            playlistRepository.updatePlaylist(playlist)
+        }
+    }
     fun deletePlaylist(playlistId: Long) {
         viewModelScope.launch {
-            repository.deletePlaylist(playlistId)
+            playlistRepository.deletePlaylist(playlistId)
         }
     }
 }

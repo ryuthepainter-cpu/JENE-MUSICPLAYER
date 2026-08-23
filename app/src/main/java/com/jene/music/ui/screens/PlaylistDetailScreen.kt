@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -35,8 +36,10 @@ fun PlaylistDetailScreen(
     playlistId: Long,
     onBack: () -> Unit
 ) {
-    val playlist by viewModel.repository.getPlaylistById(playlistId).collectAsStateWithLifecycle(null)
-    val songs by viewModel.repository.getSongsInPlaylist(playlistId).collectAsStateWithLifecycle(emptyList())
+    val playlistWithSongs by viewModel.playlistRepository.getPlaylistWithSongsById(playlistId).collectAsStateWithLifecycle(null)
+    val playlist = playlistWithSongs?.playlist
+    val songs = playlistWithSongs?.songs ?: emptyList()
+    
     val coroutineScope = rememberCoroutineScope()
     
     var showEditDialog by remember { mutableStateOf(false) }
@@ -50,7 +53,7 @@ fun PlaylistDetailScreen(
             onDismiss = { showEditDialog = false },
             onSave = { updated ->
                 coroutineScope.launch {
-                    viewModel.repository.updatePlaylist(updated)
+                    viewModel.updatePlaylist(updated)
                     showEditDialog = false
                 }
             }
@@ -65,7 +68,7 @@ fun PlaylistDetailScreen(
             confirmButton = {
                 TextButton(onClick = {
                     coroutineScope.launch {
-                        viewModel.repository.deletePlaylist(playlistId)
+                        viewModel.deletePlaylist(playlistId)
                         onBack()
                     }
                 }) { Text("Delete", color = MaterialTheme.colorScheme.error) }
@@ -94,7 +97,7 @@ fun PlaylistDetailScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                     var showMenu by remember { mutableStateOf(false) }
                     Box {
@@ -219,15 +222,15 @@ fun PlaylistDetailScreen(
                     onFavoriteClick = { viewModel.toggleFavorite(song) },
                     onRemove = { 
                         coroutineScope.launch {
-                            viewModel.repository.removeSongFromPlaylist(playlistId, song.id)
+                            viewModel.playlistRepository.removeSongFromPlaylist(playlistId, song.id)
                         }
                     },
                     onMoveUp = if (index > 0) {
                         {
                             coroutineScope.launch {
                                 val prev = songs[index - 1]
-                                viewModel.repository.updateSongPosition(playlistId, song.id, index - 1)
-                                viewModel.repository.updateSongPosition(playlistId, prev.id, index)
+                                viewModel.playlistRepository.updateSongPosition(playlistId, song.id, index - 1)
+                                viewModel.playlistRepository.updateSongPosition(playlistId, prev.id, index)
                             }
                         }
                     } else null,
@@ -235,8 +238,8 @@ fun PlaylistDetailScreen(
                         {
                             coroutineScope.launch {
                                 val next = songs[index + 1]
-                                viewModel.repository.updateSongPosition(playlistId, song.id, index + 1)
-                                viewModel.repository.updateSongPosition(playlistId, next.id, index)
+                                viewModel.playlistRepository.updateSongPosition(playlistId, song.id, index + 1)
+                                viewModel.playlistRepository.updateSongPosition(playlistId, next.id, index)
                             }
                         }
                     } else null

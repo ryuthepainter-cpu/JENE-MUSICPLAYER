@@ -27,8 +27,8 @@ fun PlaylistsScreen(viewModel: MainViewModel, onNavigateToPlaylist: (Long) -> Un
     if (showCreateDialog) {
         CreatePlaylistDialog(
             onDismiss = { showCreateDialog = false },
-            onCreate = { name ->
-                viewModel.createPlaylist(name)
+            onCreate = { name, desc ->
+                viewModel.createPlaylist(name, desc.takeIf { it.isNotEmpty() })
                 showCreateDialog = false
             }
         )
@@ -87,11 +87,11 @@ fun PlaylistsScreen(viewModel: MainViewModel, onNavigateToPlaylist: (Long) -> Un
                 }
             }
         } else {
-            items(playlists, key = { it.id }) { playlist ->
+            items(playlists, key = { it.playlist.id }) { playlistWithSongs ->
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onNavigateToPlaylist(playlist.id) }
+                        .clickable { onNavigateToPlaylist(playlistWithSongs.playlist.id) }
                         .padding(horizontal = 24.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -110,7 +110,7 @@ fun PlaylistsScreen(viewModel: MainViewModel, onNavigateToPlaylist: (Long) -> Un
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = playlist.name,
+                        text = playlistWithSongs.playlist.name,
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.onBackground
                     )
@@ -122,8 +122,9 @@ fun PlaylistsScreen(viewModel: MainViewModel, onNavigateToPlaylist: (Long) -> Un
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreatePlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
+fun CreatePlaylistDialog(onDismiss: () -> Unit, onCreate: (String, String) -> Unit) {
     var name by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
     var isError by remember { mutableStateOf(false) }
     
     AlertDialog(
@@ -142,6 +143,13 @@ fun CreatePlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
                     label = { Text("Playlist name") },
                     singleLine = true
                 )
+                Spacer(modifier = Modifier.height(16.dp))
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description (optional)") },
+                    maxLines = 3
+                )
                 if (isError) {
                     Text(
                         text = "Name cannot be empty",
@@ -159,7 +167,7 @@ fun CreatePlaylistDialog(onDismiss: () -> Unit, onCreate: (String) -> Unit) {
                     if (trimmed.isEmpty()) {
                         isError = true
                     } else {
-                        onCreate(trimmed)
+                        onCreate(trimmed, description.trim().takeIf { it.isNotEmpty() } ?: "")
                     }
                 }
             ) {

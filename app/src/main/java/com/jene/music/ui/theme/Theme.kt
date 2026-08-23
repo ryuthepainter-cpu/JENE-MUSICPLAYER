@@ -3,20 +3,29 @@ package com.jene.music.ui.theme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
 
 private val JeneDarkColorScheme = darkColorScheme(
-    primary = JeneAccentBlue,
-    secondary = JeneAccentViolet,
-    background = JeneBackground,
-    surface = JeneGlassSurface,
-    surfaceVariant = JeneGlassSurfaceHigh,
-    onPrimary = Color.Black,
-    onSecondary = Color.Black,
-    onBackground = JeneTextPrimary,
-    onSurface = JeneTextPrimary,
-    onSurfaceVariant = JeneTextSecondary,
-    outline = JeneGlassBorder
+    primary = Primary,
+    onPrimary = OnPrimary,
+    primaryContainer = PrimaryContainer,
+    onPrimaryContainer = OnPrimaryContainer,
+    secondary = Secondary,
+    onSecondary = OnSecondary,
+    secondaryContainer = SecondaryContainer,
+    onSecondaryContainer = OnSecondaryContainer,
+    background = Background,
+    onBackground = OnBackground,
+    surface = Surface,
+    onSurface = OnSurface,
+    surfaceVariant = SurfaceVariant,
+    onSurfaceVariant = OnSurfaceVariant,
+    outline = Outline,
+    outlineVariant = OutlineVariant,
+    surfaceContainerLowest = SurfaceContainerLowest,
+    surfaceContainerLow = SurfaceContainerLow,
+    surfaceContainer = SurfaceContainer,
+    surfaceContainerHigh = SurfaceContainerHigh,
+    surfaceContainerHighest = SurfaceContainerHighest
 )
 
 @Composable

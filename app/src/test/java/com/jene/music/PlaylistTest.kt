@@ -2,10 +2,10 @@ package com.jene.music
 
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
-import com.jene.music.data.AppDatabase
-import com.jene.music.data.Playlist
-import com.jene.music.data.PlaylistSongCrossRef
-import com.jene.music.data.Song
+import com.jene.music.data.local.AppDatabase
+import com.jene.music.data.model.Playlist
+import com.jene.music.data.model.PlaylistSongCrossRef
+import com.jene.music.data.model.Song
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
