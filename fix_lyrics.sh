@@ -1,0 +1,1 @@
+sed -i 's/LyricsSection(song = song, currentPosition = playbackState.playbackPosition)/LyricsSection(song = song, currentPosition = playbackState.playbackPosition, viewModel = viewModel)/' app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt

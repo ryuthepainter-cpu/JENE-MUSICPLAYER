@@ -1,0 +1,2 @@
+sed -i '/fun toggleFavorite/i \
+    suspend fun getLyricsForSong(song: Song): List<LyricLine>? {\n        val uri = repository.getLyricUriForSong(song.id)\n        return LyricsParser.getLyrics(getApplication(), song.data, uri)\n    }\n\n    fun saveLyricUri(songId: String, uri: String) {\n        viewModelScope.launch {\n            repository.saveLyricAssociation(songId, uri)\n        }\n    }\n' app/src/main/java/com/jene/music/ui/MainViewModel.kt

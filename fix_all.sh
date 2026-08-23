@@ -1,3 +1,100 @@
+cat << 'SONG' > app/src/main/java/com/jene/music/ui/components/SongListItem.kt
+package com.jene.music.ui.components
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import com.jene.music.data.Song
+
+@Composable
+fun SongListItem(
+    song: Song,
+    onClick: () -> Unit,
+    onFavoriteClick: () -> Unit,
+    onAddToPlaylist: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        JeneArtwork(
+            model = song.artworkUri ?: song.data,
+            modifier = Modifier.size(56.dp),
+            cornerRadius = 8.dp
+        )
+        
+        Spacer(modifier = Modifier.width(16.dp))
+        
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = song.title,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onBackground,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = song.artist,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+        
+        IconButton(onClick = onFavoriteClick) {
+            Icon(
+                imageVector = if (song.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                contentDescription = "Favorite",
+                tint = if (song.isFavorite) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        
+        var showMenu by remember { mutableStateOf(false) }
+        Box {
+            IconButton(onClick = { showMenu = true }) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = "Options",
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                if (onAddToPlaylist != null) {
+                    DropdownMenuItem(
+                        text = { Text("Add to playlist") },
+                        onClick = { showMenu = false; onAddToPlaylist() }
+                    )
+                }
+            }
+        }
+    }
+}
+SONG
+
+sed -i '/var songToAddToPlaylist by remember { mutableStateOf<Song?>/d' app/src/main/java/com/jene/music/ui/screens/LibraryScreen.kt
+sed -i '/if (songToAddToPlaylist != null) {/,/    }/d' app/src/main/java/com/jene/music/ui/screens/LibraryScreen.kt
+sed -i '/fun SongsTab(viewModel: MainViewModel) {/a \
+    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }\n    if (songToAddToPlaylist != null) {\n        AddToPlaylistDialog(song = songToAddToPlaylist!!, viewModel = viewModel, onDismiss = { songToAddToPlaylist = null })\n    }' app/src/main/java/com/jene/music/ui/screens/LibraryScreen.kt
+
+cat << 'ALBUM' > app/src/main/java/com/jene/music/ui/screens/AlbumDetailScreen.kt
 package com.jene.music.ui.screens
 
 import androidx.compose.foundation.layout.*
@@ -150,3 +247,11 @@ fun AlbumDetailScreen(
         }
     }
 }
+ALBUM
+
+# Fix SearchScreen.kt 
+sed -i '/var songToAddToPlaylist by remember { mutableStateOf<Song?>/d' app/src/main/java/com/jene/music/ui/screens/SearchScreen.kt
+sed -i '/if (songToAddToPlaylist != null) {/,/    }/d' app/src/main/java/com/jene/music/ui/screens/SearchScreen.kt
+sed -i '/val searchResults by/a \
+    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }\n    if (songToAddToPlaylist != null) {\n        AddToPlaylistDialog(song = songToAddToPlaylist!!, viewModel = viewModel, onDismiss = { songToAddToPlaylist = null })\n    }' app/src/main/java/com/jene/music/ui/screens/SearchScreen.kt
+

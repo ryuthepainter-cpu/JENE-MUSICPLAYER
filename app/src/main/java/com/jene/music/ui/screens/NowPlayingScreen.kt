@@ -12,6 +12,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import android.content.Intent
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -31,6 +35,14 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val currentSong by viewModel.musicServiceConnection.currentSong.collectAsStateWithLifecycle()
     val playbackState by viewModel.musicServiceConnection.playbackState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
+    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
+    if (songToAddToPlaylist != null) {
+        com.jene.music.ui.components.AddToPlaylistDialog(
+            song = songToAddToPlaylist!!,
+            viewModel = viewModel,
+            onDismiss = { songToAddToPlaylist = null }
+        )
+    }
 
     if (currentSong == null) return
     val song = currentSong!!
@@ -82,7 +94,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onBackground
                 )
-                IconButton(onClick = { /* TODO: Queue */ }) {
+                IconButton(onClick = { songToAddToPlaylist = song }) {
                     Icon(
                         imageVector = Icons.Filled.QueueMusic,
                         contentDescription = "Queue",
@@ -207,7 +219,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(64.dp))
             
             // Lyrics Section
-            LyricsSection(song = song, currentPosition = playbackState.playbackPosition)
+            LyricsSection(song = song, currentPosition = playbackState.playbackPosition, viewModel = viewModel)
             
             Spacer(modifier = Modifier.height(120.dp))
         }
@@ -215,12 +227,22 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-fun LyricsSection(song: Song, currentPosition: Long) {
+fun LyricsSection(song: Song, currentPosition: Long, viewModel: MainViewModel) {
     var lyrics by remember(song) { mutableStateOf<List<LyricLine>?>(null) }
     var hasAttemptedLoad by remember(song) { mutableStateOf(false) }
+    var reloadTrigger by remember(song) { mutableStateOf(0) }
     
-    LaunchedEffect(song) {
-        lyrics = LyricsParser.getLyrics(song.data)
+    val context = LocalContext.current
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            viewModel.saveLyricUri(song.id, uri.toString())
+            reloadTrigger++
+        }
+    }
+    
+    LaunchedEffect(song, reloadTrigger) {
+        lyrics = viewModel.getLyricsForSong(song)
         hasAttemptedLoad = true
     }
     
@@ -252,6 +274,10 @@ fun LyricsSection(song: Song, currentPosition: Long) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = { launcher.launch(arrayOf("*/*")) }) {
+                Text("Add Lyrics File")
+            }
         } else {
             lyrics!!.forEachIndexed { index, line ->
                 val nextLine = lyrics!!.getOrNull(index + 1)

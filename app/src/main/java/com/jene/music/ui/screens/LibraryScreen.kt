@@ -11,12 +11,15 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.SongListItem
+import com.jene.music.ui.components.AddToPlaylistDialog
+import com.jene.music.data.Song
 import com.jene.music.ui.screens.AlbumsScreen
 
 @Composable
 fun LibraryScreen(viewModel: MainViewModel, onNavigateToAlbum: (String, String) -> Unit) {
     var selectedTabIndex by remember { mutableStateOf(0) }
     val tabs = listOf("Songs", "Albums")
+
     
     Column(modifier = Modifier.fillMaxSize()) {
         Text(
@@ -52,6 +55,10 @@ fun LibraryScreen(viewModel: MainViewModel, onNavigateToAlbum: (String, String) 
 
 @Composable
 fun SongsTab(viewModel: MainViewModel) {
+    var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
+    if (songToAddToPlaylist != null) {
+        AddToPlaylistDialog(song = songToAddToPlaylist!!, viewModel = viewModel, onDismiss = { songToAddToPlaylist = null })
+    }
     val songs by viewModel.allSongs.collectAsStateWithLifecycle()
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -61,7 +68,8 @@ fun SongsTab(viewModel: MainViewModel) {
             SongListItem(
                 song = song,
                 onClick = { viewModel.playSong(song, songs) },
-                onFavoriteClick = { viewModel.toggleFavorite(song) }
+                onFavoriteClick = { viewModel.toggleFavorite(song) },
+                    onAddToPlaylist = { songToAddToPlaylist = song }
             )
         }
     }

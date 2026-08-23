@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.Update
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 
@@ -12,8 +13,14 @@ interface PlaylistDao {
     @Query("SELECT * FROM playlists ORDER BY name ASC")
     fun getAllPlaylists(): Flow<List<Playlist>>
 
+    @Query("SELECT * FROM playlists WHERE id = :id")
+    fun getPlaylistById(id: Long): Flow<Playlist?>
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertPlaylist(playlist: Playlist): Long
+    
+    @Update
+    suspend fun updatePlaylist(playlist: Playlist)
 
     @Query("DELETE FROM playlists WHERE id = :id")
     suspend fun deletePlaylist(id: Long)
@@ -38,4 +45,8 @@ interface PlaylistDao {
         ORDER BY playlist_songs.position ASC
     """)
     fun getSongsInPlaylist(playlistId: Long): Flow<List<Song>>
+    
+    @Transaction
+    @Query("UPDATE playlist_songs SET position = :newPosition WHERE playlistId = :playlistId AND songId = :songId")
+    suspend fun updateSongPosition(playlistId: Long, songId: String, newPosition: Int)
 }

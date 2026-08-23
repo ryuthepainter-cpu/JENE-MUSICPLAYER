@@ -12,7 +12,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     private val database = AppDatabase.getDatabase(application)
     private val mediaScanner = MediaScanner(application, database.songDao())
-    val repository = MediaRepository(database.songDao(), database.playlistDao(), mediaScanner)
+    val repository = MediaRepository(database.lyricAssociationDao(), database.songDao(), database.playlistDao(), mediaScanner)
     
     val musicServiceConnection = MusicServiceConnection(application)
     
@@ -58,6 +58,17 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         musicServiceConnection.playSongs(contextList, startIndex)
     }
     
+    suspend fun getLyricsForSong(song: Song): List<LyricLine>? {
+        val uri = repository.getLyricUriForSong(song.id)
+        return LyricsParser.getLyrics(getApplication(), song.data, uri)
+    }
+
+    fun saveLyricUri(songId: String, uri: String) {
+        viewModelScope.launch {
+            repository.saveLyricAssociation(songId, uri)
+        }
+    }
+
     fun toggleFavorite(song: Song) {
         viewModelScope.launch {
             repository.toggleFavorite(song)

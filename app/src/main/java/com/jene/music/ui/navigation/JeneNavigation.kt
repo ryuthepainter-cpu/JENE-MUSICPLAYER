@@ -66,7 +66,7 @@ fun JeneNavigation(viewModel: MainViewModel) {
                 }) 
             }
             composable("search") { SearchScreen(viewModel) }
-            composable("playlists") { PlaylistsScreen(viewModel) }
+            composable("playlists") { PlaylistsScreen(viewModel, onNavigateToPlaylist = { id -> navController.navigate("playlistDetail/$id") }) }
             
             composable(
                 "albumDetail/{albumName}/{artistName}",
@@ -93,6 +93,18 @@ fun JeneNavigation(viewModel: MainViewModel) {
                 NowPlayingScreen(viewModel, onBack = { navController.popBackStack() })
             }
             
+            composable(
+                "playlistDetail/{playlistId}",
+                arguments = listOf(navArgument("playlistId") { type = NavType.LongType })
+            ) { backStackEntry ->
+                val playlistId = backStackEntry.arguments?.getLong("playlistId") ?: 0L
+                PlaylistDetailScreen(
+                    viewModel = viewModel,
+                    playlistId = playlistId,
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
             composable("settings") {
                 SettingsScreen(viewModel, onBack = { navController.popBackStack() })
             }

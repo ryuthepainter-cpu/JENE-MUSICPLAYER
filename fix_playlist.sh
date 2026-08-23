@@ -1,0 +1,3 @@
+sed -i 's/    ModalBottomSheet(onDismissRequest = onDismiss) {/    val sheetState = rememberModalBottomSheetState()\n    val coroutineScope = rememberCoroutineScope()\n\n    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = sheetState) {/' app/src/main/java/com/jene/music/ui/components/AddToPlaylistDialog.kt
+
+sed -i 's/viewModel.addSongToPlaylist(playlist.id, song.id)\n                                onDismiss()/viewModel.addSongToPlaylist(playlist.id, song.id)\n                                coroutineScope.launch { sheetState.hide(); onDismiss() }/' app/src/main/java/com/jene/music/ui/components/AddToPlaylistDialog.kt

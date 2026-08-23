@@ -9,6 +9,8 @@ data class Playlist(
     @PrimaryKey(autoGenerate = true)
     val id: Long = 0,
     val name: String,
+    val description: String? = null,
+    val artworkUri: String? = null,
     val dateCreated: Long = System.currentTimeMillis()
 )
 

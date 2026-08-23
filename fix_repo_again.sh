@@ -1,3 +1,4 @@
+cat << 'REPO_EOF' > app/src/main/java/com/jene/music/data/MediaRepository.kt
 package com.jene.music.data
 
 import kotlinx.coroutines.flow.Flow
@@ -70,3 +71,4 @@ class MediaRepository(
         lyricDao.insertLyricAssociation(LyricAssociation(songId, uri))
     }
 }
+REPO_EOF

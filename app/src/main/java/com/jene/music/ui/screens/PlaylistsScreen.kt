@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jene.music.ui.MainViewModel
 
 @Composable
-fun PlaylistsScreen(viewModel: MainViewModel) {
+fun PlaylistsScreen(viewModel: MainViewModel, onNavigateToPlaylist: (Long) -> Unit) {
     val playlists by viewModel.allPlaylists.collectAsStateWithLifecycle()
     var showCreateDialog by remember { mutableStateOf(false) }
 
@@ -91,7 +91,7 @@ fun PlaylistsScreen(viewModel: MainViewModel) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { /* TODO: Navigate to Playlist */ }
+                        .clickable { onNavigateToPlaylist(playlist.id) }
                         .padding(horizontal = 24.dp, vertical = 12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
