@@ -22,6 +22,6 @@ dependencyResolutionManagement {
   }
 }
 
-rootProject.name = "AURA Music"
+rootProject.name = "JENE"
 
 include(":app")
