@@ -107,6 +107,7 @@ fun AlbumDetailScreen(
                                 if (album.songs.isNotEmpty()) {
                                     viewModel.musicServiceConnection.setShuffleModeEnabled(false)
                                     viewModel.playSong(album.songs.first(), album.songs)
+                                    
                                 }
                             },
                             modifier = Modifier.weight(1f).padding(end = 8.dp),
@@ -120,8 +121,8 @@ fun AlbumDetailScreen(
                         Button(
                             onClick = {
                                 if (album.songs.isNotEmpty()) {
-                                    viewModel.musicServiceConnection.setShuffleModeEnabled(true)
-                                    viewModel.playSong(album.songs.first(), album.songs)
+                                    viewModel.shuffleAndPlay(album.songs)
+                                    
                                 }
                             },
                             modifier = Modifier.weight(1f).padding(start = 8.dp),

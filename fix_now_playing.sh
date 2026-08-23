@@ -1,0 +1,3 @@
+sed -i 's/import androidx.compose.ui.Modifier/import androidx.compose.ui.Modifier\nimport androidx.compose.foundation.rememberScrollState\nimport androidx.compose.foundation.verticalScroll/' app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt
+sed -i 's/val song = currentSong!!/val song = currentSong!!\n    val scrollState = rememberScrollState()/' app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt
+sed -i 's/Column(/Column(\n            modifier = Modifier\n                .fillMaxSize()\n                .verticalScroll(scrollState)\n                .padding(24.dp)\n        ) {\n            \/\/ Header\n            Row(/' app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt

@@ -1,0 +1,2 @@
+sed -i 's/fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier) {/fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier, onNavigateToNowPlaying: () -> Unit = {}) {/' app/src/main/java/com/jene/music/ui/components/MiniPlayer.kt
+sed -i 's/\/\* TODO: Navigate to Now Playing Screen \*\//onNavigateToNowPlaying()/' app/src/main/java/com/jene/music/ui/components/MiniPlayer.kt

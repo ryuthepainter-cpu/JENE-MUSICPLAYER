@@ -1,0 +1,1 @@
+sed -i 's/viewModel.musicServiceConnection.setShuffleModeEnabled(false)/viewModel.musicServiceConnection.setShuffleModeEnabled(false)\n                                    viewModel.playSong(album.songs.first(), album.songs)/' app/src/main/java/com/jene/music/ui/screens/AlbumDetailScreen.kt

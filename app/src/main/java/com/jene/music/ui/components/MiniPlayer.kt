@@ -20,7 +20,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.jene.music.ui.MainViewModel
 
 @Composable
-fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier) {
+fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier, onNavigateToNowPlaying: () -> Unit = {}) {
     val currentSong by viewModel.musicServiceConnection.currentSong.collectAsStateWithLifecycle()
     val playbackState by viewModel.musicServiceConnection.playbackState.collectAsStateWithLifecycle()
     
@@ -31,7 +31,7 @@ fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier) {
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(24.dp))
                 .background(MaterialTheme.colorScheme.surface)
-                .clickable { /* TODO: Navigate to Now Playing Screen */ }
+                .clickable { onNavigateToNowPlaying() }
                 .padding(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {

@@ -3,12 +3,13 @@ package com.jene.music.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -18,16 +19,20 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
+import com.jene.music.data.LyricLine
+import com.jene.music.data.LyricsParser
+import com.jene.music.data.Song
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.JeneArtwork
+import kotlinx.coroutines.launch
 
 @Composable
 fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val currentSong by viewModel.musicServiceConnection.currentSong.collectAsStateWithLifecycle()
     val playbackState by viewModel.musicServiceConnection.playbackState.collectAsStateWithLifecycle()
-    
-    if (currentSong == null) return
+    val scrollState = rememberScrollState()
 
+    if (currentSong == null) return
     val song = currentSong!!
 
     Box(
@@ -50,10 +55,11 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background.copy(alpha = 0.7f))
         )
-        
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
+                .verticalScroll(scrollState)
                 .padding(24.dp)
         ) {
             // Header
@@ -84,18 +90,18 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(32.dp))
-            
+
             // Artwork
             JeneArtwork(
                 model = song.artworkUri ?: song.data,
                 modifier = Modifier.fillMaxWidth(),
                 cornerRadius = 32.dp
             )
-            
+
             Spacer(modifier = Modifier.height(48.dp))
-            
+
             // Title & Favorite
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -126,9 +132,9 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
             }
-            
+
             Spacer(modifier = Modifier.height(24.dp))
-            
+
             // Progress
             Slider(
                 value = playbackState.playbackPosition.toFloat(),
@@ -140,7 +146,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     inactiveTrackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
             )
-            
+
             // Controls
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -196,6 +202,72 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         tint = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
+            }
+            
+            Spacer(modifier = Modifier.height(64.dp))
+            
+            // Lyrics Section
+            LyricsSection(song = song, currentPosition = playbackState.playbackPosition)
+            
+            Spacer(modifier = Modifier.height(120.dp))
+        }
+    }
+}
+
+@Composable
+fun LyricsSection(song: Song, currentPosition: Long) {
+    var lyrics by remember(song) { mutableStateOf<List<LyricLine>?>(null) }
+    var hasAttemptedLoad by remember(song) { mutableStateOf(false) }
+    
+    LaunchedEffect(song) {
+        lyrics = LyricsParser.getLyrics(song.data)
+        hasAttemptedLoad = true
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
+            .padding(24.dp)
+    ) {
+        Text(
+            text = "Lyrics",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        if (!hasAttemptedLoad) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        } else if (lyrics.isNullOrEmpty()) {
+            Text(
+                text = "Lyrics unavailable",
+                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onBackground
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "JENE can display lyrics embedded in your music files or local .LRC files.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            lyrics!!.forEachIndexed { index, line ->
+                val nextLine = lyrics!!.getOrNull(index + 1)
+                val isActive = currentPosition >= line.startTimeMs && (nextLine == null || currentPosition < nextLine.startTimeMs)
+                val isPast = currentPosition >= line.startTimeMs && !isActive
+                
+                Text(
+                    text = line.text,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+                    ),
+                    color = if (isActive) MaterialTheme.colorScheme.primary 
+                            else if (isPast) MaterialTheme.colorScheme.onSurfaceVariant 
+                            else MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
             }
         }
     }

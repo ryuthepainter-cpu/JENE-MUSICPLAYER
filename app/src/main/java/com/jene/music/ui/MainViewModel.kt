@@ -46,6 +46,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
+    fun shuffleAndPlay(contextList: List<Song>) {
+        if (contextList.isEmpty()) return
+        musicServiceConnection.setShuffleModeEnabled(true)
+        val startIndex = contextList.indices.random()
+        musicServiceConnection.playSongs(contextList, startIndex)
+    }
+
     fun playSong(song: Song, contextList: List<Song> = allSongs.value) {
         val startIndex = contextList.indexOfFirst { it.id == song.id }.takeIf { it >= 0 } ?: 0
         musicServiceConnection.playSongs(contextList, startIndex)
