@@ -1,0 +1,6 @@
+{
+  "name": "AURA Music",
+  "description": "Premium offline Android music player",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
