@@ -38,6 +38,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     val currentSong = playerState.currentSong ?: return
     val favoriteSongs by viewModel.favoriteSongs.collectAsStateWithLifecycle()
     val isFavorite = favoriteSongs.any { it.id == currentSong.id }
+    val lyrics by viewModel.lyricsState.collectAsStateWithLifecycle()
 
     Box(modifier = Modifier.fillMaxSize().background(Color(0xFF050505))) {
         NowPlayingBackground(currentSong)
@@ -66,7 +67,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             Spacer(modifier = Modifier.weight(1f))
             NowPlayingControls(viewModel, playerState)
             Spacer(modifier = Modifier.height(24.dp))
-            NowPlayingLyricsPreview()
+            NowPlayingLyricsPreview(lyrics)
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -272,7 +273,7 @@ private fun NowPlayingControls(viewModel: MainViewModel, playerState: PlayerStat
 }
 
 @Composable
-private fun NowPlayingLyricsPreview() {
+private fun NowPlayingLyricsPreview(lyrics: List<com.jene.music.data.model.LyricLine>?) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -290,20 +291,32 @@ private fun NowPlayingLyricsPreview() {
                 Icon(Icons.Filled.OpenInFull, contentDescription = "Expand", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
             }
             Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "I've been on my own for long enough...",
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
-            Text(
-                text = "Maybe you can show me how to love",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis
-            )
+            
+            if (lyrics.isNullOrEmpty()) {
+                Text(
+                    text = "No lyrics available",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1
+                )
+            } else {
+                Text(
+                    text = lyrics.firstOrNull()?.text ?: "",
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (lyrics.size > 1) {
+                    Text(
+                        text = lyrics[1].text,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
         }
     }
 }

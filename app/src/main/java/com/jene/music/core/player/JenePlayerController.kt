@@ -51,7 +51,7 @@ class JenePlayerController(context: Context) {
         controllerFuture.addListener({
             controller = controllerFuture.get()
             controller?.addListener(PlayerListener())
-            updateState()
+            updateState(controller)
         }, MoreExecutors.directExecutor())
     }
     
@@ -100,30 +100,28 @@ class JenePlayerController(context: Context) {
         controller?.repeatMode = repeatMode
     }
     
-    private fun updateState() {
-        controller?.let { c ->
-            var song = _playerState.value.currentSong
-            c.currentMediaItem?.let { mediaItem ->
+    private fun updateState(player: Player? = controller) {
+        player?.let { c ->
+            val mediaItem = c.currentMediaItem
+            val song = if (mediaItem != null) {
                 val mediaId = mediaItem.mediaId
-                song = currentPlaylist.find { it.id == mediaId }
-                if (song == null) {
-                    val metadata = mediaItem.mediaMetadata
-                    song = Song(
-                        id = mediaId,
-                        data = mediaItem.localConfiguration?.uri?.toString() ?: "",
-                        title = metadata.title?.toString() ?: "Unknown",
-                        artist = metadata.artist?.toString() ?: "Unknown",
-                        album = metadata.albumTitle?.toString() ?: "Unknown",
-                        duration = c.duration,
-                        artworkUri = metadata.artworkUri?.toString()
-                    )
-                }
+                currentPlaylist.find { it.id == mediaId } ?: Song(
+                    id = mediaId,
+                    data = mediaItem.localConfiguration?.uri?.toString() ?: "",
+                    title = mediaItem.mediaMetadata.title?.toString() ?: "Unknown",
+                    artist = mediaItem.mediaMetadata.artist?.toString() ?: "Unknown",
+                    album = mediaItem.mediaMetadata.albumTitle?.toString() ?: "Unknown",
+                    duration = if (c.duration == androidx.media3.common.C.TIME_UNSET) 0L else c.duration,
+                    artworkUri = mediaItem.mediaMetadata.artworkUri?.toString()
+                )
+            } else {
+                null
             }
 
             _playerState.value = _playerState.value.copy(
                 currentSong = song,
                 isPlaying = c.isPlaying,
-                duration = c.duration,
+                duration = if (c.duration == androidx.media3.common.C.TIME_UNSET) 0L else c.duration,
                 shuffleModeEnabled = c.shuffleModeEnabled,
                 repeatMode = c.repeatMode
             )
@@ -156,11 +154,11 @@ class JenePlayerController(context: Context) {
     
     private inner class PlayerListener : Player.Listener {
         override fun onEvents(player: Player, events: Player.Events) {
-            updateState()
+            updateState(player)
         }
         
         override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
-            updateState()
+            updateState(controller)
         }
     }
 }

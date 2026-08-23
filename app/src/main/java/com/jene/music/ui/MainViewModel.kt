@@ -41,9 +41,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val mostPlayedSongs = repository.mostPlayedSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     
     val allPlaylists = playlistRepository.allPlaylistsWithSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
-    
+
+    private val _lyricsState = MutableStateFlow<List<LyricLine>?>(null)
+    val lyricsState: StateFlow<List<LyricLine>?> = _lyricsState.asStateFlow()
+
     init {
         scanLibrary()
+        viewModelScope.launch {
+            playerController.playerState.map { it.currentSong?.id }.distinctUntilChanged().collect { songId ->
+                val currentSong = playerController.playerState.value.currentSong
+                if (currentSong != null && currentSong.id == songId) {
+                    _lyricsState.value = getLyricsForSong(currentSong)
+                } else {
+                    _lyricsState.value = null
+                }
+            }
+        }
     }
 
     val albums: StateFlow<List<Album>> = allSongs.map { songs ->
