@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > /app/applet/app/src/main/java/com/jene/music/data/LyricsParser.kt
 package com.jene.music.data
 
 import android.content.Context
@@ -150,3 +151,4 @@ object LyricsParser {
         return lyrics.sortedBy { it.startTimeMs }
     }
 }
+INNER_EOF

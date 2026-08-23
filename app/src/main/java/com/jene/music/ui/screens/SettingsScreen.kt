@@ -13,10 +13,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.jene.music.ui.MainViewModel
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.content.Intent
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
+    val context = LocalContext.current
+    val lyricsDirectory by viewModel.lyricsDirectoryUri.collectAsStateWithLifecycle()
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+        if (uri != null) {
+            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            viewModel.setLyricsDirectory(uri.toString())
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -43,6 +57,11 @@ fun SettingsScreen(viewModel: MainViewModel, onBack: () -> Unit) {
         ) {
             item {
                 SettingsSectionTitle("Library")
+                SettingsItem(
+                    title = "Lyrics Folder",
+                    subtitle = if (lyricsDirectory != null) "Folder Selected" else "Tap to choose a folder for .lrc files",
+                    onClick = { launcher.launch(null) }
+                )
                 SettingsItem(
                     title = "Scan Library",
                     subtitle = "Look for new music files on your device",

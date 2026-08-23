@@ -13,6 +13,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val mediaScanner = MediaScanner(application, database.songDao())
     val repository = MediaRepository(database.lyricAssociationDao(), database.songDao(), database.playlistDao(), mediaScanner)
+    val settingsRepository = com.jene.music.data.SettingsRepository(application)
+    val lyricsDirectoryUri = settingsRepository.lyricsDirectoryFlow.stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+    fun setLyricsDirectory(uri: String?) {
+        viewModelScope.launch {
+            settingsRepository.setLyricsDirectory(uri)
+        }
+    }
     
     val musicServiceConnection = MusicServiceConnection(application)
     
@@ -60,7 +68,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     suspend fun getLyricsForSong(song: Song): List<LyricLine>? {
         val uri = repository.getLyricUriForSong(song.id)
-        return LyricsParser.getLyrics(getApplication(), song.data, uri)
+        return LyricsParser.getLyrics(getApplication(), song, uri, lyricsDirectoryUri.value)
     }
 
     fun saveLyricUri(songId: String, uri: String) {

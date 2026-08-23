@@ -1,0 +1,1 @@
+sed -i 's/return LyricsParser.getLyrics(getApplication(), song.data, uri)/return LyricsParser.getLyrics(getApplication(), song, uri, lyricsDirectoryUri.value)/' app/src/main/java/com/jene/music/ui/MainViewModel.kt

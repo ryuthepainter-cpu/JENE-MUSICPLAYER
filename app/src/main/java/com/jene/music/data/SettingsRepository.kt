@@ -9,12 +9,12 @@ import kotlinx.coroutines.flow.map
 val Context.dataStore by preferencesDataStore(name = "settings")
 
 class SettingsRepository(private val context: Context) {
-
     companion object {
         val THEME = stringPreferencesKey("theme")
         val DYNAMIC_ARTWORK = booleanPreferencesKey("dynamic_artwork")
         val GLASS_INTENSITY = floatPreferencesKey("glass_intensity")
         val ANIMATION_INTENSITY = floatPreferencesKey("animation_intensity")
+        val LYRICS_DIRECTORY = stringPreferencesKey("lyrics_directory")
     }
 
     val themeFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -31,6 +31,16 @@ class SettingsRepository(private val context: Context) {
 
     val animationIntensityFlow: Flow<Float> = context.dataStore.data.map { preferences ->
         preferences[ANIMATION_INTENSITY] ?: 1.0f
+    }
+
+    val lyricsDirectoryFlow: Flow<String?> = context.dataStore.data.map { preferences ->
+        preferences[LYRICS_DIRECTORY]
+    }
+
+    suspend fun setLyricsDirectory(uri: String?) {
+        context.dataStore.edit { preferences ->
+            if (uri == null) preferences.remove(LYRICS_DIRECTORY) else preferences[LYRICS_DIRECTORY] = uri
+        }
     }
 
     suspend fun setTheme(theme: String) {

@@ -249,6 +249,7 @@ fun LyricsSection(song: Song, currentPosition: Long, viewModel: MainViewModel) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .heightIn(min = 400.dp, max = 500.dp)
             .clip(RoundedCornerShape(24.dp))
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
             .padding(24.dp)
@@ -270,30 +271,48 @@ fun LyricsSection(song: Song, currentPosition: Long, viewModel: MainViewModel) {
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "JENE can display lyrics embedded in your music files or local .LRC files.",
+                text = "JENE can display lyrics embedded in your music files, local .LRC files, or a SAF lyrics directory.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Spacer(modifier = Modifier.height(16.dp))
             Button(onClick = { launcher.launch(arrayOf("*/*")) }) {
-                Text("Add Lyrics File")
+                Text("Select .LRC File for this Song")
             }
         } else {
-            lyrics!!.forEachIndexed { index, line ->
-                val nextLine = lyrics!!.getOrNull(index + 1)
-                val isActive = currentPosition >= line.startTimeMs && (nextLine == null || currentPosition < nextLine.startTimeMs)
-                val isPast = currentPosition >= line.startTimeMs && !isActive
-                
-                Text(
-                    text = line.text,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
-                    ),
-                    color = if (isActive) MaterialTheme.colorScheme.primary 
-                            else if (isPast) MaterialTheme.colorScheme.onSurfaceVariant 
-                            else MaterialTheme.colorScheme.onBackground,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+            val activeIndex = remember(currentPosition, lyrics) {
+                val lines = lyrics!!
+                var bestIndex = -1
+                for (i in lines.indices) {
+                    if (currentPosition >= lines[i].startTimeMs) bestIndex = i
+                    else break
+                }
+                bestIndex
+            }
+            
+            LaunchedEffect(activeIndex) {
+                if (activeIndex >= 0) {
+                    listState.animateScrollToItem(kotlin.math.max(0, activeIndex - 2))
+                }
+            }
+            
+            androidx.compose.foundation.lazy.LazyColumn(state = listState, modifier = Modifier.fillMaxSize()) {
+                items(lyrics!!.size) { index ->
+                    val line = lyrics!![index]
+                    val isActive = index == activeIndex
+                    val isPast = index < activeIndex
+                    Text(
+                        text = line.text,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal
+                        ),
+                        color = if (isActive) MaterialTheme.colorScheme.primary
+                                 else if (isPast) MaterialTheme.colorScheme.onSurfaceVariant
+                                 else MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
             }
         }
     }

@@ -1,0 +1,1 @@
+sed -i 's/    val animationIntensityFlow: Flow<Float> = context.dataStore.data.map { preferences ->\n    val lyricsDirectoryFlow/    val animationIntensityFlow: Flow<Float> = context.dataStore.data.map { preferences ->/' app/src/main/java/com/jene/music/data/SettingsRepository.kt

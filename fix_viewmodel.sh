@@ -1,5 +1,1 @@
-sed -i '/val albums: StateFlow<List<Album>> =/i \
-    init {\
-        scanLibrary()\
-    }\
-' app/src/main/java/com/jene/music/ui/MainViewModel.kt
+sed -i '/val repository = MediaRepository/a \    val settingsRepository = com.jene.music.data.SettingsRepository(application)\n    val lyricsDirectoryUri = settingsRepository.lyricsDirectoryFlow.stateIn(viewModelScope, SharingStarted.Lazily, null)\n\n    fun setLyricsDirectory(uri: String?) {\n        viewModelScope.launch {\n            settingsRepository.setLyricsDirectory(uri)\n        }\n    }' app/src/main/java/com/jene/music/ui/MainViewModel.kt
