@@ -1,10 +1,18 @@
+
+
 package com.jene.music.ui
+
+import kotlinx.coroutines.Dispatchers
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.jene.music.data.*
-import com.jene.music.player.MusicServiceConnection
+import com.jene.music.data.model.*
+import com.jene.music.data.local.*
+import com.jene.music.data.repository.*
+import com.jene.music.data.mediastore.*
+
+import com.jene.music.core.player.JenePlayerController
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
@@ -13,7 +21,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = AppDatabase.getDatabase(application)
     private val mediaScanner = MediaScanner(application, database.songDao())
     val repository = MediaRepository(database.lyricAssociationDao(), database.songDao(), database.playlistDao(), mediaScanner)
-    val settingsRepository = com.jene.music.data.SettingsRepository(application)
+    val settingsRepository = SettingsRepository(application)
+    val lyricsRepository = LyricsRepository(application)
     val lyricsDirectoryUri = settingsRepository.lyricsDirectoryFlow.stateIn(viewModelScope, SharingStarted.Lazily, null)
 
     fun setLyricsDirectory(uri: String?) {
@@ -22,7 +31,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
     
-    val musicServiceConnection = MusicServiceConnection(application)
+    val playerController = JenePlayerController(application)
     
     val allSongs = repository.allSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
     val favoriteSongs = repository.favoriteSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
@@ -46,7 +55,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
                 val sortedSongs = groupedSongs.sortedWith(compareBy({ it.discNumber }, { it.trackNumber }, { it.title }))
                 Album(albumName, artistName, artwork, sortedSongs)
             }.sortedBy { it.name }
-    }.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+    }.flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     fun scanLibrary() {
         viewModelScope.launch {
@@ -56,19 +66,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     fun shuffleAndPlay(contextList: List<Song>) {
         if (contextList.isEmpty()) return
-        musicServiceConnection.setShuffleModeEnabled(true)
+        playerController.setShuffleModeEnabled(true)
         val startIndex = contextList.indices.random()
-        musicServiceConnection.playSongs(contextList, startIndex)
+        playerController.playSongs(contextList, startIndex)
     }
 
     fun playSong(song: Song, contextList: List<Song> = allSongs.value) {
         val startIndex = contextList.indexOfFirst { it.id == song.id }.takeIf { it >= 0 } ?: 0
-        musicServiceConnection.playSongs(contextList, startIndex)
+        playerController.playSongs(contextList, startIndex)
     }
     
     suspend fun getLyricsForSong(song: Song): List<LyricLine>? {
         val uri = repository.getLyricUriForSong(song.id)
-        return LyricsParser.getLyrics(getApplication(), song, uri, lyricsDirectoryUri.value)
+        return lyricsRepository.getLyrics(song, uri, lyricsDirectoryUri.value)
     }
 
     fun saveLyricUri(songId: String, uri: String) {

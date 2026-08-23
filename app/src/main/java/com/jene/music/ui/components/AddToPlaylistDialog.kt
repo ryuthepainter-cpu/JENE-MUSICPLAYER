@@ -9,7 +9,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jene.music.data.Song
+import com.jene.music.data.model.Song
 import com.jene.music.ui.MainViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)

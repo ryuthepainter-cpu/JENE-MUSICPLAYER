@@ -1,4 +1,4 @@
-package com.jene.music.data
+package com.jene.music.data.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

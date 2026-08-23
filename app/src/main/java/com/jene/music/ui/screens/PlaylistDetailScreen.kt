@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jene.music.data.Playlist
-import com.jene.music.data.Song
+import com.jene.music.data.model.Playlist
+import com.jene.music.data.model.Song
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.JeneArtwork
 import com.jene.music.ui.components.SongListItem
@@ -163,7 +163,7 @@ fun PlaylistDetailScreen(
                     Button(
                         onClick = {
                             if (songs.isNotEmpty()) {
-                                viewModel.musicServiceConnection.setShuffleModeEnabled(false)
+                                viewModel.playerController.setShuffleModeEnabled(false)
                                 viewModel.playSong(songs.first(), songs)
                             }
                         },

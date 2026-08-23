@@ -1,7 +1,9 @@
+cat << 'INNER_EOF' > app/src/main/java/com/jene/music/player/MusicServiceConnection.kt
 package com.jene.music.player
 
 import android.content.ComponentName
 import android.content.Context
+import android.net.Uri
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
 import androidx.media3.common.Player
@@ -9,9 +11,14 @@ import androidx.media3.session.MediaController
 import androidx.media3.session.SessionToken
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.MoreExecutors
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import com.jene.music.data.Song
 
 class MusicServiceConnection(context: Context) {
@@ -28,6 +35,11 @@ class MusicServiceConnection(context: Context) {
     private val _currentSong = MutableStateFlow<Song?>(null)
     val currentSong: StateFlow<Song?> = _currentSong.asStateFlow()
 
+    private var currentPlaylist: List<Song> = emptyList()
+
+    private val scope = CoroutineScope(Dispatchers.Main)
+    private var progressJob: Job? = null
+
     init {
         controllerFuture.addListener({
             controller = controllerFuture.get()
@@ -37,26 +49,26 @@ class MusicServiceConnection(context: Context) {
     }
     
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
+        currentPlaylist = songs
         val mediaItems = songs.map { song ->
+            val metadataBuilder = MediaMetadata.Builder()
+                .setTitle(song.title)
+                .setArtist(song.artist)
+                .setAlbumTitle(song.album)
+                
+            if (song.artworkUri != null) {
+                metadataBuilder.setArtworkUri(Uri.parse(song.artworkUri))
+            }
+            
             MediaItem.Builder()
                 .setMediaId(song.id)
                 .setUri(song.data)
-                .setMediaMetadata(
-                    MediaMetadata.Builder()
-                        .setTitle(song.title)
-                        .setArtist(song.artist)
-                        .setAlbumTitle(song.album)
-                        .build()
-                )
+                .setMediaMetadata(metadataBuilder.build())
                 .build()
         }
         controller?.setMediaItems(mediaItems, startIndex, 0)
         controller?.prepare()
         controller?.play()
-        
-        if (startIndex in songs.indices) {
-            _currentSong.value = songs[startIndex]
-        }
     }
     
     fun playPause() {
@@ -72,9 +84,11 @@ class MusicServiceConnection(context: Context) {
     fun skipToNext() = controller?.seekToNextMediaItem()
     fun skipToPrevious() = controller?.seekToPreviousMediaItem()
     fun seekTo(positionMs: Long) = controller?.seekTo(positionMs)
+
     fun setShuffleModeEnabled(enabled: Boolean) {
         controller?.shuffleModeEnabled = enabled
     }
+
     fun setRepeatMode(repeatMode: Int) {
         controller?.repeatMode = repeatMode
     }
@@ -88,9 +102,52 @@ class MusicServiceConnection(context: Context) {
                 shuffleModeEnabled = c.shuffleModeEnabled,
                 repeatMode = c.repeatMode
             )
-            // Current song updating would need looking up by ID, 
-            // handled manually or via the ViewModel observing the repository.
+            
+            c.currentMediaItem?.let { mediaItem ->
+                val mediaId = mediaItem.mediaId
+                var song = currentPlaylist.find { it.id == mediaId }
+                if (song == null) {
+                    val metadata = mediaItem.mediaMetadata
+                    song = Song(
+                        id = mediaId,
+                        data = mediaItem.localConfiguration?.uri?.toString() ?: "",
+                        title = metadata.title?.toString() ?: "Unknown",
+                        artist = metadata.artist?.toString() ?: "Unknown",
+                        album = metadata.albumTitle?.toString() ?: "Unknown",
+                        artworkUri = metadata.artworkUri?.toString()
+                    )
+                }
+                if (_currentSong.value?.id != song.id) {
+                    _currentSong.value = song
+                }
+            }
+
+            if (c.isPlaying) {
+                startProgressTracker()
+            } else {
+                stopProgressTracker()
+            }
         }
+    }
+
+    private fun startProgressTracker() {
+        if (progressJob?.isActive == true) return
+        progressJob = scope.launch {
+            while (true) {
+                controller?.let { c ->
+                    _playbackState.value = _playbackState.value.copy(
+                        playbackPosition = c.currentPosition,
+                        duration = c.duration
+                    )
+                }
+                delay(100L)
+            }
+        }
+    }
+
+    private fun stopProgressTracker() {
+        progressJob?.cancel()
+        progressJob = null
     }
     
     private inner class PlayerListener : Player.Listener {
@@ -111,3 +168,4 @@ data class PlaybackState(
     val shuffleModeEnabled: Boolean = false,
     val repeatMode: Int = Player.REPEAT_MODE_OFF
 )
+INNER_EOF

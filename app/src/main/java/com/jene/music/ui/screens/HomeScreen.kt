@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -187,33 +188,72 @@ fun SongCard(
     artworkUri: String?,
     onClick: () -> Unit
 ) {
-    Column(
+    Box(
         modifier = Modifier
-            .width(140.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .width(160.dp)
+            .height(200.dp)
+            .clip(RoundedCornerShape(24.dp))
             .clickable(onClick = onClick)
     ) {
         JeneArtwork(
             model = artworkUri,
+            modifier = Modifier.fillMaxSize(),
+            cornerRadius = 0.dp
+        )
+        
+        // Gradient overlay for text readability
+        Box(
             modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    androidx.compose.ui.graphics.Brush.verticalGradient(
+                        colors = listOf(
+                            androidx.compose.ui.graphics.Color.Transparent,
+                            androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.8f)
+                        ),
+                        startY = 100f
+                    )
+                )
+        )
+        
+        // Play button indicator (Glassy pill)
+        Box(
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .padding(end = 16.dp, bottom = 40.dp)
+                .size(32.dp)
+                .clip(androidx.compose.foundation.shape.CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Filled.PlayArrow,
+                contentDescription = "Play",
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(20.dp)
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .align(Alignment.BottomStart)
                 .fillMaxWidth()
-                .aspectRatio(1f),
-            cornerRadius = 12.dp
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = title,
-            style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
-        Text(
-            text = subtitle,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis
-        )
+                .padding(16.dp)
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = androidx.compose.ui.graphics.Color.White,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = subtitle,
+                style = MaterialTheme.typography.labelMedium,
+                color = androidx.compose.ui.graphics.Color.White.copy(alpha = 0.7f),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
     }
 }

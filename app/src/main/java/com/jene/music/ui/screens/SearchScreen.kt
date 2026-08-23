@@ -14,7 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.jene.music.data.Song
+import com.jene.music.data.model.Song
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.SongListItem
 import com.jene.music.ui.components.AddToPlaylistDialog

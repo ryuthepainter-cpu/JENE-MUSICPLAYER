@@ -1,4 +1,6 @@
-package com.jene.music.data
+package com.jene.music.data.mediastore
+import com.jene.music.data.model.*
+import com.jene.music.data.local.*
 
 import android.content.ContentUris
 import android.content.Context

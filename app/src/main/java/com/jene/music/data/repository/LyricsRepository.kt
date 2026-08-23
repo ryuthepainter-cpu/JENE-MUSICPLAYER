@@ -1,4 +1,5 @@
-package com.jene.music.data
+package com.jene.music.data.repository
+import com.jene.music.data.model.*
 
 import android.content.Context
 import android.media.MediaMetadataRetriever
@@ -9,13 +10,9 @@ import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.InputStream
 
-data class LyricLine(
-    val startTimeMs: Long,
-    val text: String
-)
 
-object LyricsParser {
-    suspend fun getLyrics(context: Context, song: Song, lyricUri: String? = null, directoryUri: String? = null): List<LyricLine>? = withContext(Dispatchers.IO) {
+class LyricsRepository(private val context: android.content.Context) {
+    suspend fun getLyrics(song: Song, lyricUri: String? = null, directoryUri: String? = null): List<LyricLine>? = withContext(Dispatchers.IO) {
         // 1. Try associated URI first
         if (lyricUri != null) {
             try {

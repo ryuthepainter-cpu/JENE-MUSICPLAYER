@@ -1,4 +1,4 @@
-package com.jene.music.data
+package com.jene.music.data.model
 
 data class Album(
     val name: String,

@@ -23,7 +23,7 @@ import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.JeneArtwork
 import com.jene.music.ui.components.SongListItem
 import com.jene.music.ui.components.AddToPlaylistDialog
-import com.jene.music.data.Song
+import com.jene.music.data.model.Song
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -110,7 +110,7 @@ fun AlbumDetailScreen(
                         Button(
                             onClick = {
                                 if (album.songs.isNotEmpty()) {
-                                    viewModel.musicServiceConnection.setShuffleModeEnabled(false)
+                                    viewModel.playerController.setShuffleModeEnabled(false)
                                     viewModel.playSong(album.songs.first(), album.songs)
                                 }
                             },

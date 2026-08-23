@@ -1,3 +1,4 @@
+cat << 'INNER_EOF' > app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt
 package com.jene.music.ui.screens
 
 import androidx.compose.foundation.background
@@ -24,19 +25,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
-import com.jene.music.data.model.LyricLine
-
-import com.jene.music.data.model.Song
+import com.jene.music.data.LyricLine
+import com.jene.music.data.LyricsParser
+import com.jene.music.data.Song
 import com.jene.music.ui.MainViewModel
 import com.jene.music.ui.components.JeneArtwork
 import kotlinx.coroutines.launch
 
 @Composable
 fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
-    val playerState by viewModel.playerController.playerState.collectAsStateWithLifecycle()
-    val currentSong = playerState.currentSong
-    val playbackPosition by viewModel.playerController.playbackPosition.collectAsStateWithLifecycle()
-    val playbackState = playerState
+    val currentSong by viewModel.musicServiceConnection.currentSong.collectAsStateWithLifecycle()
+    val playbackState by viewModel.musicServiceConnection.playbackState.collectAsStateWithLifecycle()
     val scrollState = rememberScrollState()
 
     var songToAddToPlaylist by remember { mutableStateOf<Song?>(null) }
@@ -169,8 +168,8 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
             // Progress Slider
             Slider(
-                value = playbackPosition.toFloat(),
-                onValueChange = { viewModel.playerController.seekTo(it.toLong()) },
+                value = playbackState.playbackPosition.toFloat(),
+                onValueChange = { viewModel.musicServiceConnection.seekTo(it.toLong()) },
                 valueRange = 0f..(playbackState.duration.toFloat().takeIf { it > 0 } ?: 100f),
                 modifier = Modifier.fillMaxWidth().height(24.dp),
                 colors = SliderDefaults.colors(
@@ -186,7 +185,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = formatDuration(playbackPosition),
+                    text = formatDuration(playbackState.playbackPosition),
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -205,7 +204,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = { viewModel.playerController.setShuffleModeEnabled(!playbackState.shuffleModeEnabled) }) {
+                IconButton(onClick = { viewModel.musicServiceConnection.setShuffleModeEnabled(!playbackState.shuffleModeEnabled) }) {
                     Icon(
                         imageVector = Icons.Filled.Shuffle,
                         contentDescription = "Shuffle",
@@ -213,7 +212,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
                 
-                IconButton(onClick = { viewModel.playerController.skipToPrevious() }) {
+                IconButton(onClick = { viewModel.musicServiceConnection.skipToPrevious() }) {
                     Icon(
                         imageVector = Icons.Filled.SkipPrevious,
                         contentDescription = "Previous",
@@ -227,7 +226,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                         .size(80.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primary)
-                        .clickable { viewModel.playerController.playPause() },
+                        .clickable { viewModel.musicServiceConnection.playPause() },
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -238,7 +237,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                     )
                 }
                 
-                IconButton(onClick = { viewModel.playerController.skipToNext() }) {
+                IconButton(onClick = { viewModel.musicServiceConnection.skipToNext() }) {
                     Icon(
                         imageVector = Icons.Filled.SkipNext,
                         contentDescription = "Next",
@@ -259,7 +258,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
             Spacer(modifier = Modifier.height(64.dp))
             
             // Lyrics Section
-            LyricsSection(song = song, currentPosition = playbackPosition, viewModel = viewModel)
+            LyricsSection(song = song, currentPosition = playbackState.playbackPosition, viewModel = viewModel)
             
             Spacer(modifier = Modifier.height(120.dp))
         }
@@ -367,3 +366,4 @@ fun LyricsSection(song: Song, currentPosition: Long, viewModel: MainViewModel) {
         }
     }
 }
+INNER_EOF

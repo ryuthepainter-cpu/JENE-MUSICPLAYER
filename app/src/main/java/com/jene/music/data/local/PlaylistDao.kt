@@ -1,10 +1,16 @@
-package com.jene.music.data
+package com.jene.music.data.local
 
+import com.jene.music.data.model.*
 import androidx.room.Dao
+import com.jene.music.data.model.*
 import androidx.room.Insert
+import com.jene.music.data.model.*
 import androidx.room.OnConflictStrategy
+import com.jene.music.data.model.*
 import androidx.room.Query
+import com.jene.music.data.model.*
 import androidx.room.Update
+import com.jene.music.data.model.*
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 

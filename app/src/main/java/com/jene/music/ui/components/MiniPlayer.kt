@@ -21,62 +21,85 @@ import com.jene.music.ui.MainViewModel
 
 @Composable
 fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier, onNavigateToNowPlaying: () -> Unit = {}) {
-    val currentSong by viewModel.musicServiceConnection.currentSong.collectAsStateWithLifecycle()
-    val playbackState by viewModel.musicServiceConnection.playbackState.collectAsStateWithLifecycle()
+    val playerState by viewModel.playerController.playerState.collectAsStateWithLifecycle()
+    val currentSong = playerState.currentSong
+    val playbackPosition by viewModel.playerController.playbackPosition.collectAsStateWithLifecycle()
+    val playbackState = playerState
     
     if (currentSong != null) {
         val song = currentSong!!
-        Row(
+        Column(
             modifier = modifier
                 .fillMaxWidth()
+                .padding(horizontal = 8.dp)
                 .clip(RoundedCornerShape(24.dp))
-                .background(MaterialTheme.colorScheme.surface)
+                .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.9f))
                 .clickable { onNavigateToNowPlaying() }
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
+                .padding(8.dp)
         ) {
-            JeneArtwork(
-                model = song.artworkUri ?: song.data,
-                modifier = Modifier.size(48.dp),
-                cornerRadius = 16.dp
-            )
-            
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(horizontal = 16.dp)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = song.title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                JeneArtwork(
+                    model = song.artworkUri ?: song.data,
+                    modifier = Modifier.size(48.dp),
+                    cornerRadius = 16.dp
                 )
-                Text(
-                    text = song.artist,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                
+                Column(
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text(
+                        text = song.title,
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    Text(
+                        text = song.artist,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+                
+                IconButton(onClick = { viewModel.playerController.playPause() }) {
+                    Icon(
+                        imageVector = if (playbackState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
+                        contentDescription = "Play/Pause",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
+                
+                IconButton(onClick = { viewModel.playerController.skipToNext() }) {
+                    Icon(
+                        imageVector = Icons.Filled.SkipNext,
+                        contentDescription = "Next",
+                        tint = MaterialTheme.colorScheme.onSurface
+                    )
+                }
             }
             
-            IconButton(onClick = { viewModel.musicServiceConnection.playPause() }) {
-                Icon(
-                    imageVector = if (playbackState.isPlaying) Icons.Filled.Pause else Icons.Filled.PlayArrow,
-                    contentDescription = "Play/Pause",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
-            
-            IconButton(onClick = { viewModel.musicServiceConnection.skipToNext() }) {
-                Icon(
-                    imageVector = Icons.Filled.SkipNext,
-                    contentDescription = "Next",
-                    tint = MaterialTheme.colorScheme.onSurface
-                )
-            }
+            // Add a very thin progress bar at the bottom like Image 3
+            Spacer(modifier = Modifier.height(4.dp))
+            val progress = if (playbackState.duration > 0) {
+                playbackPosition.toFloat() / playbackState.duration.toFloat()
+            } else 0f
+            LinearProgressIndicator(
+                progress = { progress },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(2.dp)
+                    .padding(horizontal = 8.dp)
+                    .clip(RoundedCornerShape(50)),
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f),
+            )
         }
     }
 }

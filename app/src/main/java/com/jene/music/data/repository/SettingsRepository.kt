@@ -1,4 +1,7 @@
-package com.jene.music.data
+package com.jene.music.data.repository
+import com.jene.music.data.model.*
+import com.jene.music.data.local.*
+import com.jene.music.data.mediastore.*
 
 import android.content.Context
 import androidx.datastore.preferences.core.*

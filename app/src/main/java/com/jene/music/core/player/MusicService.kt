@@ -1,4 +1,4 @@
-package com.jene.music.player
+package com.jene.music.core.player
 
 import android.content.Intent
 import androidx.media3.common.AudioAttributes
@@ -6,7 +6,7 @@ import androidx.media3.common.C
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
-import com.jene.music.data.AppDatabase
+import com.jene.music.data.local.AppDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

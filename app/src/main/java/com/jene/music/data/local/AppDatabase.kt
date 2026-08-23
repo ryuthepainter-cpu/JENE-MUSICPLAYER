@@ -1,9 +1,13 @@
-package com.jene.music.data
+package com.jene.music.data.local
 
 import android.content.Context
+import com.jene.music.data.model.*
 import androidx.room.Database
+import com.jene.music.data.model.*
 import androidx.room.Room
+import com.jene.music.data.model.*
 import androidx.room.RoomDatabase
+import com.jene.music.data.model.*
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
