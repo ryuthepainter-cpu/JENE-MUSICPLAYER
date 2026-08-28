@@ -42,18 +42,28 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     
     val allPlaylists = playlistRepository.allPlaylistsWithSongs.stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
-    private val _lyricsState = MutableStateFlow<List<LyricLine>?>(null)
-    val lyricsState: StateFlow<List<LyricLine>?> = _lyricsState.asStateFlow()
+    private val _lyricsState = MutableStateFlow<com.jene.music.data.model.LyricsState>(com.jene.music.data.model.LyricsState.NoLyrics)
+    val lyricsState: StateFlow<com.jene.music.data.model.LyricsState> = _lyricsState.asStateFlow()
 
     init {
         scanLibrary()
         viewModelScope.launch {
-            playerController.playerState.map { it.currentSong?.id }.distinctUntilChanged().collect { songId ->
+            playerController.playerState.map { it.currentSong?.id }.distinctUntilChanged().collectLatest { songId ->
                 val currentSong = playerController.playerState.value.currentSong
-                if (currentSong != null && currentSong.id == songId) {
-                    _lyricsState.value = getLyricsForSong(currentSong)
+if (currentSong != null && currentSong.id == songId) {
+                    _lyricsState.value = com.jene.music.data.model.LyricsState.Loading
+                    try {
+                        val lyrics = getLyricsForSong(currentSong)
+                        if (lyrics.isNullOrEmpty()) {
+                            _lyricsState.value = com.jene.music.data.model.LyricsState.NoLyrics
+                        } else {
+                            _lyricsState.value = com.jene.music.data.model.LyricsState.Loaded(lyrics)
+                        }
+                    } catch (e: Exception) {
+                        _lyricsState.value = com.jene.music.data.model.LyricsState.Error(e.message ?: "Failed to load lyrics")
+                    }
                 } else {
-                    _lyricsState.value = null
+                    _lyricsState.value = com.jene.music.data.model.LyricsState.NoLyrics
                 }
             }
         }

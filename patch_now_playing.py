@@ -1,9 +1,9 @@
-package com.jene.music.ui.screens
+import re
+with open("app/src/main/java/com/jene/music/ui/screens/NowPlayingScreen.kt", "w") as f:
+    f.write("""package com.jene.music.ui.screens
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -16,7 +16,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.QueueMusic
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -24,14 +23,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -57,7 +54,7 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
     
     var showQueue by remember { mutableStateOf(false) }
 
-    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF050505))) {
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF0A0A0A))) {
         NowPlayingBackground(currentSong)
         
         Column(
@@ -71,55 +68,50 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp)
             ) {
+                Spacer(modifier = Modifier.height(16.dp))
+                
+                NowPlayingArtwork(
+                    currentSong = currentSong,
+                    onSwipeLeft = { viewModel.playerController.skipToNext() },
+                    onSwipeRight = { viewModel.playerController.skipToPrevious() }
+                )
+                
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                NowPlayingInfo(
+                    currentSong = currentSong,
+                    isFavorite = isFavorite,
+                    onToggleFavorite = { viewModel.toggleFavorite(currentSong.copy(isFavorite = isFavorite)) },
+                    onMore = { /* Open more dialog if needed */ }
+                )
+                
                 Spacer(modifier = Modifier.height(32.dp))
                 
-                BoxWithConstraints(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    val artworkSize = maxWidth * 0.85f
-                    NowPlayingArtwork(
-                        currentSong = currentSong,
-                        size = artworkSize,
-                        onSwipeLeft = { viewModel.playerController.skipToNext() },
-                        onSwipeRight = { viewModel.playerController.skipToPrevious() }
-                    )
-                }
+                NowPlayingProgress(
+                    playerState = playerState,
+                    playbackPosition = playbackPosition,
+                    onSeek = { newPosition -> viewModel.playerController.seekTo(newPosition) }
+                )
+                
+                Spacer(modifier = Modifier.height(24.dp))
+                
+                NowPlayingControls(viewModel, playerState)
+                
+                Spacer(modifier = Modifier.height(40.dp))
+                
+                NowPlayingLyricsSection(lyrics = lyrics, currentPosition = playbackPosition)
                 
                 Spacer(modifier = Modifier.height(48.dp))
-                
-                Column(modifier = Modifier.padding(horizontal = 32.dp)) {
-                    NowPlayingInfo(
-                        currentSong = currentSong,
-                        isFavorite = isFavorite,
-                        onToggleFavorite = { viewModel.toggleFavorite(currentSong.copy(isFavorite = isFavorite)) },
-                        onMore = { /* Open more dialog */ }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(32.dp))
-                    
-                    NowPlayingProgress(
-                        playerState = playerState,
-                        playbackPosition = playbackPosition,
-                        onSeek = { newPosition -> viewModel.playerController.seekTo(newPosition) }
-                    )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                    
-                    NowPlayingControls(viewModel, playerState)
-                    
-                    Spacer(modifier = Modifier.height(48.dp))
-                    
-                    NowPlayingLyricsSection(lyricsState = lyrics, currentPosition = playbackPosition)
-                    
-                    Spacer(modifier = Modifier.height(64.dp))
-                }
             }
         }
         
         if (showQueue) {
             ModalBottomSheet(
                 onDismissRequest = { showQueue = false },
-                containerColor = Color(0xFF141414).copy(alpha = 0.95f),
-                scrimColor = Color.Black.copy(alpha = 0.6f),
+                containerColor = Color(0xFF1E1E1E),
+                scrimColor = Color.Black.copy(alpha = 0.5f),
                 dragHandle = { BottomSheetDefaults.DragHandle(color = Color(0xFF555555)) }
             ) {
                 QueueSheetContent(
@@ -136,28 +128,18 @@ fun NowPlayingScreen(viewModel: MainViewModel, onBack: () -> Unit) {
 
 @Composable
 private fun NowPlayingBackground(currentSong: Song) {
-    AnimatedContent(
-        targetState = currentSong.id,
-        transitionSpec = {
-            fadeIn(animationSpec = tween(500)) togetherWith fadeOut(animationSpec = tween(500))
-        },
-        label = "BackgroundTransition"
-    ) { _ ->
-        Box(modifier = Modifier.fillMaxSize()) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(currentSong.artworkUri ?: currentSong.data)
-                    .crossfade(true)
-                    .build(),
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .blur(100.dp)
-            )
-            Box(modifier = Modifier.fillMaxSize().background(Color(0xFF121212).copy(alpha = 0.85f)))
-        }
-    }
+    AsyncImage(
+        model = ImageRequest.Builder(LocalContext.current)
+            .data(currentSong.artworkUri ?: currentSong.data)
+            .crossfade(true)
+            .build(),
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .fillMaxSize()
+            .blur(80.dp)
+    )
+    Box(modifier = Modifier.fillMaxSize().background(Color(0xFF050505).copy(alpha = 0.8f)))
 }
 
 @Composable
@@ -166,20 +148,15 @@ private fun NowPlayingTopBar(onBack: () -> Unit, onOpenQueue: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .height(64.dp)
-            .padding(horizontal = 24.dp),
+            .padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(
-            onClick = onBack,
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.05f))
-        ) {
+        IconButton(onClick = onBack) {
             Icon(
                 imageVector = Icons.Filled.KeyboardArrowDown,
-                contentDescription = "Collapse",
-                tint = Color.White,
+                contentDescription = "Back",
+                tint = Color(0xFFDDDDDD),
                 modifier = Modifier.size(28.dp)
             )
         }
@@ -187,47 +164,41 @@ private fun NowPlayingTopBar(onBack: () -> Unit, onOpenQueue: () -> Unit) {
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(32.dp))
-                .background(Color.White.copy(alpha = 0.08f))
-                .padding(horizontal = 20.dp, vertical = 8.dp),
+                .background(Color(0xFF222222).copy(alpha = 0.4f))
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
                 text = "NOW PLAYING",
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp),
-                color = Color(0xFFDDDDDD)
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
+                color = Color.White
             )
         }
         
-        IconButton(
-            onClick = onOpenQueue,
-            modifier = Modifier
-                .clip(CircleShape)
-                .background(Color.White.copy(alpha = 0.05f))
-        ) {
+        IconButton(onClick = onOpenQueue) {
             Icon(
-                imageVector = Icons.AutoMirrored.Filled.QueueMusic,
+                imageVector = Icons.Filled.QueueMusic,
                 contentDescription = "Queue",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
+                tint = Color(0xFFDDDDDD),
+                modifier = Modifier.size(28.dp)
             )
         }
     }
 }
 
 @Composable
-private fun NowPlayingArtwork(currentSong: Song, size: androidx.compose.ui.unit.Dp, onSwipeLeft: () -> Unit, onSwipeRight: () -> Unit) {
+private fun NowPlayingArtwork(currentSong: Song, onSwipeLeft: () -> Unit, onSwipeRight: () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val offsetX = remember(currentSong.id) { Animatable(0f) }
     var hasCommitted by remember(currentSong.id) { mutableStateOf(false) }
 
     Box(
         modifier = Modifier
-            .size(size)
+            .fillMaxWidth()
+            .aspectRatio(1f)
             .graphicsLayer {
                 translationX = offsetX.value
-                rotationZ = offsetX.value / 40f
             }
-            .shadow(24.dp, RoundedCornerShape(32.dp), spotColor = Color.Black.copy(alpha = 0.5f))
             .clip(RoundedCornerShape(32.dp))
             .pointerInput(currentSong.id) {
                 detectHorizontalDragGestures(
@@ -252,10 +223,10 @@ private fun NowPlayingArtwork(currentSong: Song, size: androidx.compose.ui.unit.
                         coroutineScope.launch {
                             offsetX.snapTo(offsetX.value + dragAmount)
                         }
-                        if (offsetX.value > 250f) {
+                        if (offsetX.value > 300f) {
                             hasCommitted = true
                             onSwipeRight()
-                        } else if (offsetX.value < -250f) {
+                        } else if (offsetX.value < -300f) {
                             hasCommitted = true
                             onSwipeLeft()
                         }
@@ -282,7 +253,7 @@ private fun NowPlayingInfo(currentSong: Song, isFavorite: Boolean, onToggleFavor
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = currentSong.title,
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.ExtraBold, fontSize = 26.sp),
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold, fontSize = 28.sp),
                 color = Color.White,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -290,7 +261,7 @@ private fun NowPlayingInfo(currentSong: Song, isFavorite: Boolean, onToggleFavor
             Spacer(modifier = Modifier.height(4.dp))
             Text(
                 text = currentSong.artist,
-                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Medium),
+                style = MaterialTheme.typography.titleMedium,
                 color = Color(0xFFAAAAAA),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
@@ -306,6 +277,14 @@ private fun NowPlayingInfo(currentSong: Song, isFavorite: Boolean, onToggleFavor
                     modifier = Modifier.size(28.dp)
                 )
             }
+            IconButton(onClick = onMore) {
+                Icon(
+                    imageVector = Icons.Filled.MoreVert,
+                    contentDescription = "More",
+                    tint = Color(0xFF888888),
+                    modifier = Modifier.size(28.dp)
+                )
+            }
         }
     }
 }
@@ -318,22 +297,6 @@ private fun NowPlayingProgress(playerState: PlayerState, playbackPosition: Long,
     } else 0f
 
     Column(modifier = Modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = formatTime(if (sliderPosition != null) (progress * playerState.duration).toLong() else playbackPosition),
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = Color(0xFFAAAAAA)
-            )
-            Text(
-                text = formatTime(playerState.duration),
-                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                color = Color(0xFFAAAAAA)
-            )
-        }
-        
         ThinProgressBar(
             progress = progress,
             onProgressChange = { sliderPosition = it },
@@ -345,6 +308,22 @@ private fun NowPlayingProgress(playerState: PlayerState, playbackPosition: Long,
                 }
             }
         )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(
+                text = formatTime(playbackPosition),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                color = Color(0xFFAAAAAA)
+            )
+            Text(
+                text = formatTime(playerState.duration),
+                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Medium),
+                color = Color(0xFFAAAAAA)
+            )
+        }
     }
 }
 
@@ -358,7 +337,7 @@ private fun ThinProgressBar(
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
-            .height(32.dp)
+            .height(24.dp)
             .pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragEnd = { onProgressChangeFinished() },
@@ -381,30 +360,26 @@ private fun ThinProgressBar(
             },
         contentAlignment = Alignment.CenterStart
     ) {
-        // Track
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
-                .background(Color.White.copy(alpha = 0.15f))
+                .background(Color(0xFF333333))
         )
-        // Progress
         Box(
             modifier = Modifier
-                .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
+                .fillMaxWidth(progress)
                 .height(4.dp)
                 .clip(RoundedCornerShape(2.dp))
                 .background(Color.White)
         )
-        // Thumb
         Box(
             modifier = Modifier
-                .offset(x = (maxWidth * progress.coerceIn(0f, 1f)) - 6.dp)
+                .offset(x = maxWidth * progress - 6.dp)
                 .size(12.dp)
                 .clip(CircleShape)
                 .background(Color.White)
-                .shadow(4.dp, CircleShape)
         )
     }
 }
@@ -425,15 +400,12 @@ private fun NowPlayingControls(viewModel: MainViewModel, playerState: PlayerStat
             )
         }
         
-        IconButton(
-            onClick = { viewModel.playerController.skipToPrevious() },
-            modifier = Modifier.size(48.dp)
-        ) {
+        IconButton(onClick = { viewModel.playerController.skipToPrevious() }) {
             Icon(
                 imageVector = Icons.Filled.SkipPrevious,
                 contentDescription = "Previous",
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(40.dp)
             )
         }
         
@@ -453,15 +425,12 @@ private fun NowPlayingControls(viewModel: MainViewModel, playerState: PlayerStat
             )
         }
         
-        IconButton(
-            onClick = { viewModel.playerController.skipToNext() },
-            modifier = Modifier.size(48.dp)
-        ) {
+        IconButton(onClick = { viewModel.playerController.skipToNext() }) {
             Icon(
                 imageVector = Icons.Filled.SkipNext,
                 contentDescription = "Next",
                 tint = Color.White,
-                modifier = Modifier.size(36.dp)
+                modifier = Modifier.size(40.dp)
             )
         }
         
@@ -484,13 +453,13 @@ private fun NowPlayingControls(viewModel: MainViewModel, playerState: PlayerStat
 }
 
 @Composable
-private fun NowPlayingLyricsSection(lyricsState: com.jene.music.data.model.LyricsState, currentPosition: Long) {
+private fun NowPlayingLyricsSection(lyrics: List<com.jene.music.data.model.LyricLine>?, currentPosition: Long) {
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(280.dp)
+            .height(200.dp)
             .clip(RoundedCornerShape(24.dp))
-            .background(Color(0xFF222222).copy(alpha = 0.5f))
+            .background(Color(0xFF1E1E1E).copy(alpha = 0.5f))
             .padding(24.dp)
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -501,61 +470,43 @@ private fun NowPlayingLyricsSection(lyricsState: com.jene.music.data.model.Lyric
             ) {
                 Text(
                     text = "LYRICS",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold, letterSpacing = 2.sp),
+                    style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold, letterSpacing = 1.sp),
                     color = Color(0xFFAAAAAA)
                 )
                 Icon(
                     imageVector = Icons.Filled.OpenInFull,
-                    contentDescription = "Expand Lyrics",
-                    tint = Color(0xFF666666),
+                    contentDescription = "Expand",
+                    tint = Color(0xFFAAAAAA),
                     modifier = Modifier.size(16.dp)
                 )
             }
             
-            when (lyricsState) {
-                is com.jene.music.data.model.LyricsState.Loading -> {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    }
+            if (lyrics.isNullOrEmpty()) {
+                Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    Text(
+                        text = "No lyrics available",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = Color(0xFF888888)
+                    )
                 }
-                is com.jene.music.data.model.LyricsState.Error -> {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
-                        Text(
-                            text = "Failed to load lyrics.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color(0xFF666666)
-                        )
-                    }
-                }
-                is com.jene.music.data.model.LyricsState.NoLyrics -> {
-                    Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
-                        Text(
-                            text = "No lyrics available for this song.",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color(0xFF666666)
-                        )
-                    }
-                }
-                is com.jene.music.data.model.LyricsState.Loaded -> {
-                    val lyrics = lyricsState.lyrics
-                    val activeIndex = lyrics.indexOfLast { currentPosition >= it.startTimeMs }.coerceAtLeast(0)
+            } else {
+                val activeIndex = lyrics.indexOfLast { currentPosition >= it.timeMs }.coerceAtLeast(0)
+                
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.Center) {
+                    val start = maxOf(0, activeIndex - 1)
+                    val end = minOf(lyrics.size - 1, activeIndex + 1)
                     
-                    Column(modifier = Modifier.weight(1f).fillMaxWidth(), verticalArrangement = Arrangement.Center) {
-                        val start = maxOf(0, activeIndex - 1)
-                        val end = minOf(lyrics.size - 1, activeIndex + 2)
-                        
-                        for (i in start..end) {
-                            val isActive = i == activeIndex
-                            Text(
-                                text = lyrics[i].text,
-                                style = if (isActive) MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 22.sp) 
-                                        else MaterialTheme.typography.titleMedium,
-                                color = if (isActive) Color.White else Color(0xFF777777),
-                                modifier = Modifier.padding(vertical = 6.dp),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
+                    for (i in start..end) {
+                        val isActive = i == activeIndex
+                        Text(
+                            text = lyrics[i].text,
+                            style = if (isActive) MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 22.sp) 
+                                    else MaterialTheme.typography.titleMedium,
+                            color = if (isActive) Color.White else Color(0xFF666666),
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
                     }
                 }
             }
@@ -578,7 +529,7 @@ fun QueueSheetContent(playerState: PlayerState, onSongClick: (Int) -> Unit) {
         )
         
         LazyColumn(
-            modifier = Modifier.fillMaxWidth().heightIn(max = 500.dp)
+            modifier = Modifier.fillMaxWidth().heightIn(max = 400.dp)
         ) {
             itemsIndexed(playerState.currentPlaylist) { index, song ->
                 val isPlaying = song.id == playerState.currentSong?.id
@@ -593,32 +544,33 @@ fun QueueSheetContent(playerState: PlayerState, onSongClick: (Int) -> Unit) {
                 ) {
                     JeneArtwork(
                         model = song.artworkUri ?: song.data,
-                        modifier = Modifier.size(56.dp),
+                        modifier = Modifier.size(48.dp),
                         cornerRadius = 8.dp
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
                             text = song.title,
-                            style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
                             color = if (isPlaying) Color.White else Color(0xFFDDDDDD),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                         Text(
                             text = song.artist,
-                            style = MaterialTheme.typography.bodyMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFFAAAAAA),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
                         )
                     }
                     if (isPlaying) {
+                        // Using explicit standard icon
                         Icon(
                             imageVector = Icons.Filled.PlayArrow,
                             contentDescription = "Playing",
                             tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(20.dp)
                         )
                     }
                 }
@@ -628,9 +580,9 @@ fun QueueSheetContent(playerState: PlayerState, onSongClick: (Int) -> Unit) {
 }
 
 private fun formatTime(durationMs: Long): String {
-    if (durationMs < 0) return "0:00"
     val totalSeconds = durationMs / 1000
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return String.format("%d:%02d", minutes, seconds)
 }
+""")

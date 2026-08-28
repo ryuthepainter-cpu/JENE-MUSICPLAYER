@@ -1,4 +1,6 @@
-package com.jene.music.ui.components
+import os
+
+new_code = """package com.jene.music.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -142,3 +144,7 @@ fun MiniPlayer(viewModel: MainViewModel, modifier: Modifier = Modifier, onNaviga
         }
     }
 }
+"""
+
+with open("app/src/main/java/com/jene/music/ui/components/MiniPlayer.kt", "w") as f:
+    f.write(new_code)

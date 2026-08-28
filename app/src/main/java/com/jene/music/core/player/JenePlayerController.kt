@@ -25,7 +25,8 @@ data class PlayerState(
     val isPlaying: Boolean = false,
     val duration: Long = 0L,
     val shuffleModeEnabled: Boolean = false,
-    val repeatMode: Int = Player.REPEAT_MODE_OFF
+    val repeatMode: Int = Player.REPEAT_MODE_OFF,
+    val currentPlaylist: List<Song> = emptyList()
 )
 
 class JenePlayerController(context: Context) {
@@ -57,6 +58,7 @@ class JenePlayerController(context: Context) {
     
     fun playSongs(songs: List<Song>, startIndex: Int = 0) {
         currentPlaylist = songs
+        _playerState.value = _playerState.value.copy(currentPlaylist = songs)
         val mediaItems = songs.map { song ->
             val metadataBuilder = MediaMetadata.Builder()
                 .setTitle(song.title)
@@ -90,6 +92,7 @@ class JenePlayerController(context: Context) {
     
     fun skipToNext() = controller?.seekToNextMediaItem()
     fun skipToPrevious() = controller?.seekToPreviousMediaItem()
+    fun skipToQueueItem(index: Int) { controller?.seekToDefaultPosition(index) }
     fun seekTo(positionMs: Long) = controller?.seekTo(positionMs)
 
     fun setShuffleModeEnabled(enabled: Boolean) {
@@ -123,7 +126,8 @@ class JenePlayerController(context: Context) {
                 isPlaying = c.isPlaying,
                 duration = if (c.duration == androidx.media3.common.C.TIME_UNSET) 0L else c.duration,
                 shuffleModeEnabled = c.shuffleModeEnabled,
-                repeatMode = c.repeatMode
+                repeatMode = c.repeatMode,
+                currentPlaylist = this@JenePlayerController.currentPlaylist
             )
             _playbackPosition.value = c.currentPosition
 

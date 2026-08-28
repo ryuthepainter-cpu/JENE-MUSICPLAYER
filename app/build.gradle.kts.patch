@@ -1,0 +1,8 @@
+tasks.register("testSylt") {
+    doLast {
+        val syltClass = Class.forName("org.jaudiotagger.tag.id3.framebody.FrameBodySYLT")
+        syltClass.methods.forEach {
+            println("${it.name} -> ${it.returnType.name}")
+        }
+    }
+}

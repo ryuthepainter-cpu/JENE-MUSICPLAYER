@@ -1,4 +1,6 @@
-package com.jene.music.ui.screens
+import re
+
+content = """package com.jene.music.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -412,3 +414,7 @@ private fun EmptyLibraryPrompt(onScanLibrary: () -> Unit) {
         )
     }
 }
+"""
+
+with open("app/src/main/java/com/jene/music/ui/screens/HomeScreen.kt", "w") as f:
+    f.write(content)

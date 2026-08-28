@@ -11,8 +11,16 @@ import java.io.File
 import java.io.InputStream
 
 
+import android.util.Log
+
 class LyricsRepository(private val context: android.content.Context) {
     suspend fun getLyrics(song: Song, lyricUri: String? = null, directoryUri: String? = null): List<LyricLine>? = withContext(Dispatchers.IO) {
+        Log.d("JENE_LYRICS_DEBUG", "getLyricsForSong() CALLED")
+        Log.d("JENE_LYRICS_DEBUG", "CURRENT SONG ID = ${song.id}")
+        Log.d("JENE_LYRICS_DEBUG", "TITLE = ${song.title}")
+        Log.d("JENE_LYRICS_DEBUG", "URI = ${song.uri}")
+        Log.d("JENE_LYRICS_DEBUG", "DATA = ${song.data}")
+
         // 1. Try associated URI first
         if (lyricUri != null) {
             try {
@@ -60,32 +68,150 @@ class LyricsRepository(private val context: android.content.Context) {
             }
         }
 
+
         try {
             val audioFilePath = song.data
-            // 3. Try local .lrc file via standard File API (might work on some devices/folders)
-            val file = File(audioFilePath)
+            
+            // 3. Try embedded lyrics via jaudiotagger
+            try {
+                Log.d("JENE_LYRICS_DEBUG", "Attempting embedded metadata extraction")
+                val file = java.io.File(audioFilePath)
+                Log.d("JENE_LYRICS_DEBUG", "java.io.File exists: ${file.exists()}")
+                if (file.exists()) {
+                    Log.d("JENE_LYRICS_DEBUG", "Audio file opened = TRUE")
+                    val audioFile = org.jaudiotagger.audio.AudioFileIO.read(file)
+                    val tag = audioFile.tag
+                    Log.d("JENE_LYRICS_DEBUG", "Metadata reader = ${audioFile.javaClass.simpleName}, Tag = ${tag?.javaClass?.simpleName}")
+                    
+                    if (tag != null) {
+                        Log.d("JENE_LYRICS_DEBUG", "Metadata frames/tags discovered = ${tag.fieldCount}")
+                        val lyricsText = tag.getFirst(org.jaudiotagger.tag.FieldKey.LYRICS)
+                        var unsyncedParsed: List<LyricLine>? = null
+                        
+                        if (!lyricsText.isNullOrEmpty()) {
+                            val parsed = parseLrc(lyricsText)
+                            if (parsed.isNotEmpty()) {
+                                Log.d("JENE_LYRICS_DEBUG", "Parsed USLT/LYRICS lines: ${parsed.size}")
+                                if (parsed.any { it.startTimeMs > 0 }) {
+                                    return@withContext parsed
+                                } else {
+                                    unsyncedParsed = parsed
+                                }
+                            }
+                        }
+                        
+                        // Check for true SYLT frame
+                        if (tag is org.jaudiotagger.tag.id3.AbstractID3v2Tag) {
+                            if (tag.hasFrame("SYLT")) {
+                                val syltFrames = tag.getFrame("SYLT")
+                                val frameList = if (syltFrames is List<*>) syltFrames else listOf(syltFrames)
+                                for (frameObj in frameList) {
+                                    val frame = frameObj as? org.jaudiotagger.tag.id3.AbstractID3v2Frame
+                                    val body = frame?.body
+                                    if (body != null && body.javaClass.simpleName == "FrameBodySYLT") {
+                                        try {
+                                            val getTextEncodingMethod = body.javaClass.getMethod("getTextEncoding")
+                                            val textEncoding = (getTextEncodingMethod.invoke(body) as Byte).toInt()
+                                            
+                                            val getTimeStampFormatMethod = body.javaClass.getMethod("getTimeStampFormat")
+                                            val timeStampFormat = getTimeStampFormatMethod.invoke(body) as Int
+                                            
+                                            val getLyricsMethod = body.javaClass.getMethod("getLyrics")
+                                            val bytes = getLyricsMethod.invoke(body) as? ByteArray
+                                            if (bytes != null && timeStampFormat == 2) {
+                                                val parsedSylt = parseSyltBytes(bytes, textEncoding)
+                                                Log.d("JENE_LYRICS_DEBUG", "Parsed SYLT lines: ${parsedSylt.size}")
+                                                if (parsedSylt.isNotEmpty()) {
+                                                    return@withContext parsedSylt
+                                                }
+                                            }
+                                        } catch (e: Exception) {
+                                            e.printStackTrace()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (unsyncedParsed != null) {
+                            return@withContext unsyncedParsed
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+
+            // 4. Try local .lrc file via standard File API
+            val file = java.io.File(audioFilePath)
             if (file.exists()) {
-                val lrcFile = File(file.parent, file.nameWithoutExtension + ".lrc")
+                val lrcFile = java.io.File(file.parent, file.nameWithoutExtension + ".lrc")
                 if (lrcFile.exists()) {
                     return@withContext parseLrc(lrcFile.readText())
                 }
-                val lrcFileUpper = File(file.parent, file.nameWithoutExtension + ".LRC")
+                val lrcFileUpper = java.io.File(file.parent, file.nameWithoutExtension + ".LRC")
                 if (lrcFileUpper.exists()) {
                     return@withContext parseLrc(lrcFileUpper.readText())
                 }
-            }
-
-            // 4. Try embedded lyrics via MediaMetadataRetriever
-            val mmr = MediaMetadataRetriever()
-            try {
-                mmr.setDataSource(audioFilePath)
-            } finally {
-                mmr.release()
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
         null
+    }
+
+    
+    private fun parseSyltBytes(bytes: ByteArray, textEncoding: Int): List<LyricLine> {
+        val lyrics = mutableListOf<LyricLine>()
+        try {
+            val terminatorSize = if (textEncoding == 1 || textEncoding == 2) 2 else 1
+            var pos = 0
+            
+            // Now read sync lines
+            while (pos < bytes.size - 4) {
+                val startPos = pos
+                while (pos < bytes.size) {
+                    var foundTerminator = true
+                    for (i in 0 until terminatorSize) {
+                        if (pos + i >= bytes.size || bytes[pos + i] != 0.toByte()) {
+                            foundTerminator = false
+                            break
+                        }
+                    }
+                    if (foundTerminator) {
+                        break
+                    }
+                    pos++
+                }
+                if (pos >= bytes.size) break
+                
+                val textBytes = bytes.copyOfRange(startPos, pos)
+                val text = when (textEncoding) {
+                    0 -> String(textBytes, Charsets.ISO_8859_1)
+                    1 -> String(textBytes, Charsets.UTF_16)
+                    2 -> String(textBytes, Charsets.UTF_16BE)
+                    3 -> String(textBytes, Charsets.UTF_8)
+                    else -> String(textBytes)
+                }
+                
+                pos += terminatorSize
+                if (pos + 4 > bytes.size) break
+                
+                // Read 32-bit int timestamp
+                val t1 = bytes[pos].toInt() and 0xFF
+                val t2 = bytes[pos+1].toInt() and 0xFF
+                val t3 = bytes[pos+2].toInt() and 0xFF
+                val t4 = bytes[pos+3].toInt() and 0xFF
+                val timeMs = (t1 shl 24) or (t2 shl 16) or (t3 shl 8) or t4
+                
+                pos += 4
+                
+                lyrics.add(LyricLine(timeMs.toLong(), text))
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+        return lyrics.sortedBy { it.startTimeMs }
     }
 
     private fun parseLrc(lrcText: String): List<LyricLine> {
